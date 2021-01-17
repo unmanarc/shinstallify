@@ -6,10 +6,13 @@ VERSION="0.1"
 OUTFILE=/dev/stdout
 RANDSTR=$(cat /dev/urandom | tr -dc 'A-Z0-9' | fold -w 8 | head -n 1)
 
-while getopts "rvo:h" OPTION; do
+while getopts "rbvo:h" OPTION; do
     case $OPTION in
     r)
         RELATIVE=1
+        ;;
+    b)
+        BINARY=1
         ;;
     v)
         VERBOSE=1
@@ -23,14 +26,15 @@ while getopts "rvo:h" OPTION; do
             echo "Example: $0 -o /tmp/installer.sh /etc/myfile /etc/dir /etc/dir/*"
             echo
             echo "Options:"
+            echo "-b    Use binary compressed mode for files (gzip+base64)"
             echo "-r    Save Files with the relative path (otherwise will use realpath)"
             echo "-v    Be Verbose of each written file"
             echo "-o    Output installer (if not specified, will grab to stdout)"
             echo "-h    Show this help"
             echo
             echo "Considerations:"
-            echo "  - By now, this will be working leaving a new-line at every generated file"
-            echo "    so, it's intended to be only used with compatible's text-only config files."
+            echo "  - By now, unless you are using the -b (binary) flag, this will be working leaving a new-line"
+            echo "    at every generated file."
             echo "  - Will not recurse into directories, "
             echo "    you should specify each directory first and then their files."
             echo
@@ -87,8 +91,13 @@ while (($#)); do
         USER=$(stat -c '%U' $FILEPATH)
         GROUP=$(stat -c '%G' $FILEPATH)
         PERMS=$(stat -c '%a' $FILEPATH)
-        echo "cat << 'EOF-$RANDSTR' | install -m '$PERMS' -o '$USER' -g '$GROUP' /dev/stdin '$FILEPATH'" >> $OUTFILE
-        cat $FILEPATH >> $OUTFILE
+        if [ "$BINARY" = "1" ]; then
+            echo "cat << 'EOF-$RANDSTR' | base64 -d | gunzip - | install -m '$PERMS' -o '$USER' -g '$GROUP' /dev/stdin '$FILEPATH'" >> $OUTFILE
+            cat $FILEPATH | gzip | base64  >> $OUTFILE
+        else
+            echo "cat << 'EOF-$RANDSTR' | install -m '$PERMS' -o '$USER' -g '$GROUP' /dev/stdin '$FILEPATH'" >> $OUTFILE
+            cat $FILEPATH >> $OUTFILE
+        fi
         echo >> $OUTFILE
         echo "EOF-$RANDSTR" >> $OUTFILE
     else

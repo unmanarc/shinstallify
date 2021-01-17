@@ -36,14 +36,15 @@ Usage:
 Example: ./shinstallify.sh -o /tmp/installer.sh /etc/myfile /etc/dir /etc/dir/*
 
 Options:
+-b    Use binary compressed mode for files (gzip+base64)
 -r    Save Files with the relative path (otherwise will use realpath)
 -v    Be Verbose of each written file
 -o    Output installer (if not specified, will grab to stdout)
 -h    Show this help
 
 Considerations:
-  - By now, this will be working leaving a new-line at every generated file
-    so, it's intended to be only used with compatible's text-only config files.
+  - By now, unless you are using the -b (binary) flag, this will be working leaving a new-line 
+    at every generated file.
   - Will not recurse into directories, 
     you should specify each directory first and then their files.
 
